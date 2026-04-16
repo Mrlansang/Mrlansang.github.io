@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加油站绩效工资计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-add {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #229954;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+
+        .btn-calculate {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-calculate:hover {
+            background: #2980b9;
+        }
+
+        .btn-export {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: #e67e22;
+        }
+
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 12px 8px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th.station-header {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+
+        td.category-cell {
+            background: #f0f3f5;
+            font-weight: 600;
+            color: #495057;
+            vertical-align: middle;
+        }
+
+        td.subcategory-cell {
+            background: #f8f9fa;
+            font-weight: 500;
+            color: #6c757d;
+            vertical-align: middle;
+        }
+
+        td.indicator-cell {
+            background: #f8f9fa;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        td.merged-indicator {
+            background: #f0f3f5;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .result-cell {
+            background: #e9ecef;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            padding: 12px 30px;
+            border-top: 2px solid #e9ecef;
+            color: #6c757d;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 350px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-modal {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-confirm {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #229954;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+            z-index: 2000;
+        }
+
+        .notification.success {
+            background: #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.warning {
+            background: #f39c12;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar-left, .toolbar-right {
+                justify-content: center;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            th, td {
+                padding: 8px 4px;
+                font-size: 12px;
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>加油站绩效工资计算器</h1>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-add" onclick="showAddStationModal()">
+                    <span>➕</span> 添加站点
+                </button>
+                <button class="btn btn-delete" onclick="deleteStation()">
+                    <span>➖</span> 删除站点
+                </button>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn btn-calculate" onclick="calculateAll()">
+                    <span>📊</span> 全部计算
+                </button>
+                <button class="btn btn-export" onclick="exportResults()">
+                    <span>💾</span> 导出结果
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="dataTable">
+            </table>
+        </div>
+
+        <div class="status-bar">
+            <span id="stationCount">共 3 个站点</span>
+            <span id="lastCalcTime">上次计算：尚未计算</span>
+        </div>
+    </div>
+
+    <div id="addStationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">新增站点</div>
+            <input type="text" id="newStationName" class="modal-input" placeholder="请输入新站点名称">
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" onclick="closeAddStationModal()">取消</button>
+                <button class="btn-modal btn-confirm" onclick="confirmAddStation()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rows = [
+            { category: "业绩指标", subcategory: "", indicator: "汽油(吨)", readonly: false },
+            { category: "业绩指标", subcategory: "", indicator: "柴油(吨)", readonly: false },
+            { category: "业绩指标", subcategory: "", indicator: "日均销量", readonly: false },
+            { category: "业绩指标", subcategory: "", indicator: "LNG销量(吨)", readonly: false },
+            { category: "业绩指标", subcategory: "", indicator: "LNG毛利（万元）", readonly: false },
+            { category: "业绩指标", subcategory: "", indicator: "可控费用（万元）", readonly: false },
+            { category: "业绩指标", subcategory: "", indicator: "油品毛利（万元）", readonly: false },
+            { category: "考核分数", subcategory: "", indicator: "考核分数", readonly: false },
+            { category: "加油站分配", subcategory: "油品类", indicator: "吨油工资", readonly: true },
+            { category: "加油站分配", subcategory: "油品类", indicator: "油品毛利工资", readonly: true },
+            { category: "加油站分配", subcategory: "非油类", indicator: "非油毛利工资", readonly: true },
+            { category: "加油站分配", subcategory: "非油类", indicator: "自营洗车绩效", readonly: false },
+            { category: "加油站分配", subcategory: "非油类", indicator: "润滑油", readonly: false },
+            { category: "加油站分配", subcategory: "非油类", indicator: "油惠商城", readonly: false },
+            { category: "加油站分配", subcategory: "非油类", indicator: "单品奖励", readonly: false },
+            { category: "加油站分配", subcategory: "", indicator: "可控费用工资总额", readonly: true },
+            { category: "加油站分配", subcategory: "新能源", indicator: "充电绩效", readonly: false },
+            { category: "加油站分配", subcategory: "新能源", indicator: "LNG绩效", readonly: true },
+            { category: "加油站分配", subcategory: "", indicator: "核拔绩效总额", readonly: true },
+        ];
+
+        let stationNames = ["站A", "站B", "站C"];
+        let data = {};
+        let lastCalcTime = null;
+
+        function initSampleData() {
+            data = {
+                "站A": {
+                    "汽油(吨)": "120", "柴油(吨)": "60", "日均销量": "25", "LNG销量(吨)": "10",
+                    "LNG毛利（万元）": "0.8", "可控费用（万元）": "0.5", "油品毛利（万元）": "5.0",
+                    "考核分数": "110", "自营洗车绩效": "2000", "润滑油": "500",
+                    "油惠商城": "300", "单品奖励": "400", "充电绩效": "1200"
+                },
+                "站B": {
+                    "汽油(吨)": "80", "柴油(吨)": "40", "日均销量": "12", "LNG销量(吨)": "5",
+                    "LNG毛利（万元）": "0.3", "可控费用（万元）": "0.4", "油品毛利（万元）": "3.0",
+                    "考核分数": "95", "自营洗车绩效": "1500", "润滑油": "300",
+                    "油惠商城": "200", "单品奖励": "250", "充电绩效": "900"
+                },
+                "站C": {
+                    "汽油(吨)": "200", "柴油(吨)": "100", "日均销量": "2.5", "LNG销量(吨)": "2",
+                    "LNG毛利（万元）": "0.12", "可控费用（万元）": "0.3", "油品毛利（万元）": "2.0",
+                    "考核分数": "100", "自营洗车绩效": "800", "润滑油": "200",
+                    "油惠商城": "100", "单品奖励": "150", "充电绩效": "600"
+                }
+            };
+        }
+
+        function computeMergeSpans() {
+            const n = rows.length;
+            const catSpans = new Array(n).fill(1);
+            const subSpans = new Array(n).fill(1);
+            const catFirst = new Array(n).fill(true);
+            const subFirst = new Array(n).fill(true);
+
+            let i = 0;
+            while (i < n) {
+                let j = i + 1;
+                while (j < n && rows[j].category === rows[i].category) {
+                    j++;
+                }
+                const span = j - i;
+                for (let k = i; k < j; k++) {
+                    catSpans[k] = span;
+                    catFirst[k] = (k === i);
+                }
+                i = j;
+            }
+
+            i = 0;
+            while (i < n) {
+                if (rows[i].subcategory === "") {
+                    subFirst[i] = true;
+                    i++;
+                    continue;
+                }
+                let j = i + 1;
+                while (j < n && rows[j].subcategory === rows[i].subcategory && rows[j].category === rows[i].category) {
+                    j++;
+                }
+                const span = j - i;
+                for (let k = i; k < j; k++) {
+                    subSpans[k] = span;
+                    subFirst[k] = (k === i);
+                }
+                i = j;
+            }
+
+            return { catSpans, subSpans, catFirst, subFirst };
+        }
+
+        function buildTable() {
+            const table = document.getElementById('dataTable');
+            table.innerHTML = '';
+
+            const headerRow = document.createElement('tr');
+            ['大类', '细类', '指标名称', ...stationNames].forEach((text, idx) => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                if (idx >= 3) {
+                    th.className = 'station-header';
+                }
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            const mergeInfo = computeMergeSpans();
+
+            rows.forEach((row, rIdx) => {
+                const tr = document.createElement('tr');
+                const catSpan = mergeInfo.catSpans[rIdx];
+                const subSpan = mergeInfo.subSpans[rIdx];
+                const isCatFirst = mergeInfo.catFirst[rIdx];
+                const isSubFirst = mergeInfo.subFirst[rIdx];
+
+                if (isCatFirst) {
+                    const td = document.createElement('td');
+                    td.textContent = row.category;
+                    td.className = 'category-cell';
+                    td.rowSpan = catSpan;
+                    tr.appendChild(td);
+                }
+
+                if (row.subcategory === "") {
+                    const td = document.createElement('td');
+                    td.textContent = row.indicator;
+                    td.className = 'merged-indicator';
+                    td.colSpan = 2;
+                    tr.appendChild(td);
+                } else {
+                    if (isSubFirst) {
+                        const td = document.createElement('td');
+                        td.textContent = row.subcategory;
+                        td.className = 'subcategory-cell';
+                        td.rowSpan = subSpan;
+                        tr.appendChild(td);
+                    }
+                    const td = document.createElement('td');
+                    td.textContent = row.indicator;
+                    td.className = 'indicator-cell';
+                    tr.appendChild(td);
+                }
+
+                stationNames.forEach(station => {
+                    const td = document.createElement('td');
+                    if (row.readonly) {
+                        td.className = 'result-cell';
+                        td.id = `result-${station}-${rIdx}`;
+                        const value = data[station]?.[row.indicator] || '';
+                        td.textContent = value;
+                    } else {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = data[station]?.[row.indicator] || '';
+                        input.dataset.station = station;
+                        input.dataset.indicator = row.indicator;
+                        input.addEventListener('change', handleInputChange);
+                        td.appendChild(input);
+                    }
+                    tr.appendChild(td);
+                });
+
+                table.appendChild(tr);
+            });
+
+            updateStatus();
+        }
+
+        function handleInputChange(e) {
+            const station = e.target.dataset.station;
+            const indicator = e.target.dataset.indicator;
+            const value = e.target.value;
+
+            if (!data[station]) {
+                data[station] = {};
+            }
+            data[station][indicator] = value;
+        }
+
+        function getFloat(station, indicator, defaultValue = 0.0) {
+            const val = (data[station]?.[indicator] || "").trim();
+            if (val === "") return defaultValue;
+            const num = parseFloat(val);
+            return isNaN(num) ? defaultValue : num;
+        }
+
+        function calculateAll() {
+            try {
+                stationNames.forEach(station => {
+                    const gas = getFloat(station, "汽油(吨)");
+                    const diesel = getFloat(station, "柴油(吨)");
+                    const daily = getFloat(station, "日均销量");
+                    const lngVol = getFloat(station, "LNG销量(吨)");
+                    const lngProfit = getFloat(station, "LNG毛利（万元）");
+                    const cost = getFloat(station, "可控费用（万元）");
+                    const oilProfit = getFloat(station, "油品毛利（万元）");
+                    const score = getFloat(station, "考核分数", 100.0);
+                    const wash = getFloat(station, "自营洗车绩效");
+                    const lube = getFloat(station, "润滑油");
+                    const mall = getFloat(station, "油惠商城");
+                    const single = getFloat(station, "单品奖励");
+                    const charge = getFloat(station, "充电绩效");
+
+                    let gasPrice, dieselPrice;
+                    if (daily >= 18) {
+                        gasPrice = 13;
+                        dieselPrice = 10;
+                    } else if (daily >= 3) {
+                        gasPrice = 16;
+                        dieselPrice = 13;
+                    } else {
+                        gasPrice = 19;
+                        dieselPrice = 16;
+                    }
+                    const tonOil = (gas * gasPrice + diesel * dieselPrice) * score / 100;
+
+                    let rate;
+                    if (daily >= 18) {
+                        rate = 0.03;
+                    } else if (daily >= 3) {
+                        rate = 0.04;
+                    } else {
+                        rate = 0.05;
+                    }
+                    const oilProfitSalary = oilProfit * rate * 10000 * score / 100;
+
+                    const nonOil = oilProfit * 0.20 * 10000;
+
+                    const costRate = daily >= 3 ? -0.03 : -0.02;
+                    const costSalary = cost * costRate * 10000;
+
+                    let lngPrice, lngRate;
+                    if (daily > 30) {
+                        lngPrice = 15;
+                        lngRate = 0.03;
+                    } else if (daily > 20) {
+                        lngPrice = 17;
+                        lngRate = 0.04;
+                    } else {
+                        lngPrice = 20;
+                        lngRate = 0.05;
+                    }
+                    const lngPerf = (lngVol * lngPrice * score / 100) + (lngProfit * lngRate * 10000 * score / 100);
+
+                    let total = tonOil + oilProfitSalary + nonOil + wash + lube + mall + single + costSalary + charge + lngPerf;
+                    total = total <= 0 ? 0 : total;
+
+                    if (!data[station]) data[station] = {};
+                    data[station]["吨油工资"] = tonOil.toFixed(2);
+                    data[station]["油品毛利工资"] = oilProfitSalary.toFixed(2);
+                    data[station]["非油毛利工资"] = nonOil.toFixed(2);
+                    data[station]["可控费用工资总额"] = costSalary.toFixed(2);
+                    data[station]["LNG绩效"] = lngPerf.toFixed(2);
+                    data[station]["核拔绩效总额"] = total.toFixed(2);
+                });
+
+                rows.forEach((row, rIdx) => {
+                    if (row.readonly) {
+                        stationNames.forEach(station => {
+                            const cell = document.getElementById(`result-${station}-${rIdx}`);
+                            if (cell) {
+                                cell.textContent = data[station]?.[row.indicator] || '';
+                            }
+                        });
+                    }
+                });
+
+                lastCalcTime = new Date();
+                updateStatus();
+                showNotification('所有站点计算完毕！', 'success');
+            } catch (error) {
+                showNotification('计算过程中发生异常：' + error.message, 'error');
+            }
+        }
+
+        function updateStatus() {
+            document.getElementById('stationCount').textContent = `共 ${stationNames.length} 个站点`;
+            const timeStr = lastCalcTime 
+                ? `上次计算：${lastCalcTime.toLocaleString('zh-CN')}` 
+                : '上次计算：尚未计算';
+            document.getElementById('lastCalcTime').textContent = timeStr;
+        }
+
+        function showAddStationModal() {
+            document.getElementById('addStationModal').style.display = 'block';
+            document.getElementById('newStationName').value = '';
+            document.getElementById('newStationName').focus();
+        }
+
+        function closeAddStationModal() {
+            document.getElementById('addStationModal').style.display = 'none';
+        }
+
+        function confirmAddStation() {
+            const name = document.getElementById('newStationName').value.trim();
+            if (!name) {
+                showNotification('站点名称不能为空', 'warning');
+                return;
+            }
+            if (stationNames.includes(name)) {
+                showNotification('站点名称已存在', 'warning');
+                return;
+            }
+            stationNames.push(name);
+            data[name] = {};
+            buildTable();
+            closeAddStationModal();
+            showNotification(`已添加站点：${name}`, 'success');
+        }
+
+        function deleteStation() {
+            if (stationNames.length <= 1) {
+                showNotification('至少保留一个站点', 'warning');
+                return;
+            }
+            const removed = stationNames.pop();
+            delete data[removed];
+            buildTable();
+            showNotification(`已删除站点：${removed}`, 'success');
+        }
+
+        function exportResults() {
+            if (stationNames.length === 0) {
+                showNotification('没有站点数据可导出', 'warning');
+                return;
+            }
+
+            let csv = '\uFEFF';
+            csv += '大类,细类,指标名称,' + stationNames.join(',') + '\n';
+
+            rows.forEach(row => {
+                const rowData = [row.category, row.subcategory, row.indicator];
+                stationNames.forEach(station => {
+                    rowData.push(data[station]?.[row.indicator] || '');
+                });
+                csv += rowData.join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `加油站绩效工资_${new Date().toLocaleDateString('zh-CN')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification('结果已导出', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('addStationModal').style.display === 'block') {
+                confirmAddStation();
+            }
+        });
+
+        initSampleData();
+        buildTable();
+    </script>
+</body>
+</html>
